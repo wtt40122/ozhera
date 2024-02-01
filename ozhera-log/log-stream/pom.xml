@@ -32,6 +32,12 @@
         </dependency>
 
         <dependency>
+            <groupId>run.mone</groupId>
+            <artifactId>storage-doris</artifactId>
+            <version>1.4-jdk21-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.rocketmq</groupId>
             <artifactId>rocketmq-acl</artifactId>
             <version>${rocketmq-version}</version>
