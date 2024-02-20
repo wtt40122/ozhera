@@ -23,17 +23,17 @@
     </licenses>
 
     <modules>
-        <module>ozhera-app</module>
-        <module>ozhera-demo-client</module>
-        <module>ozhera-demo-server</module>
+<!--        <module>ozhera-app</module>-->
+<!--        <module>ozhera-demo-client</module>-->
+<!--        <module>ozhera-demo-server</module>-->
         <module>ozhera-log</module>
-        <module>ozhera-monitor</module>
-        <module>ozhera-operator</module>
-        <module>ozhera-prometheus-agent</module>
-        <module>ozhera-tspandata</module>
-        <module>ozhera-webhook</module>
-        <module>prometheus-starter-all</module>
-        <module>trace-etl</module>
+<!--        <module>ozhera-monitor</module>-->
+<!--        <module>ozhera-operator</module>-->
+<!--        <module>ozhera-prometheus-agent</module>-->
+<!--        <module>ozhera-tspandata</module>-->
+<!--        <module>ozhera-webhook</module>-->
+<!--        <module>prometheus-starter-all</module>-->
+<!--        <module>trace-etl</module>-->
     </modules>
 
     <properties>
@@ -635,12 +635,12 @@
             <dependency>
                 <groupId>run.mone</groupId>
                 <artifactId>log-api</artifactId>
-                <version>1.4.0-jdk21</version>
+                <version>1.4.0-jdk21-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>run.mone</groupId>
                 <artifactId>log-common</artifactId>
-                <version>1.4.0-jdk21</version>
+                <version>1.4.0-jdk21-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>run.mone</groupId>
@@ -1029,14 +1029,16 @@
     </build>
 
     <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
         <repository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <id>central</id>
+            <name>maven-release-virtual</name>
+            <url>https://pkgs.d.xiaomi.net/artifactory/maven-release-virtual</url>
         </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>maven-snapshot-virtual</name>
+            <url>https://pkgs.d.xiaomi.net/artifactory/maven-snapshot-virtual</url>
+        </snapshotRepository>
     </distributionManagement>
 
 </project>
