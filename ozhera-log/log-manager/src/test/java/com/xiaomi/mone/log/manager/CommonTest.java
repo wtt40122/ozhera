@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.StructuredTaskScope;
 
 /**
  * @author wtt
@@ -36,5 +37,10 @@ public class CommonTest {
         List<String> list = Lists.newArrayList("zhangsan", "lisi", "test", "john");
         List<String> otherAdmins = CollectionUtil.sub(list, 1, list.size());
         log.info("result:{}", otherAdmins);
+    }
+
+    @Test
+    public void structuredTest(){
+        StructuredTaskScope.ShutdownOnFailure shutdownOnFailure = new StructuredTaskScope.ShutdownOnFailure();
     }
 }
