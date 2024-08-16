@@ -106,44 +106,46 @@ public class ChannelDefineRpcLocator implements ChannelDefineLocator {
     public static AgentTailConf logCollectMeta2ChannelDefines(LogCollectMeta logCollectMeta) {
         AgentTailConf agentTailConf = new AgentTailConf();
         List<ChannelDefine> channelDefines = Lists.newArrayList();
-        logCollectMeta.getAppLogMetaList().forEach(appLogMeta -> {
-            ChannelDefine channelDefine = new ChannelDefine();
-            channelDefine.setAppId(appLogMeta.getAppId());
-            channelDefine.setAppName(appLogMeta.getAppName());
-            channelDefine.setSingleMetaData(logCollectMeta.getSingleMetaData());
-            channelDefine.setPodType(logCollectMeta.getPodType());
-            channelDefine.setDelDirectory(logCollectMeta.getDelDirectory());
+        if (CollectionUtils.isNotEmpty(logCollectMeta.getAppLogMetaList())) {
+            logCollectMeta.getAppLogMetaList().forEach(appLogMeta -> {
+                ChannelDefine channelDefine = new ChannelDefine();
+                channelDefine.setAppId(appLogMeta.getAppId());
+                channelDefine.setAppName(appLogMeta.getAppName());
+                channelDefine.setSingleMetaData(logCollectMeta.getSingleMetaData());
+                channelDefine.setPodType(logCollectMeta.getPodType());
+                channelDefine.setDelDirectory(logCollectMeta.getDelDirectory());
 
-            List<LogPattern> logPatternList = appLogMeta.getLogPatternList();
-            for (LogPattern logPattern : logPatternList) {
-                ChannelDefine cloneChannelDefine = ObjectUtil.clone(channelDefine);
-                cloneChannelDefine.setChannelId(logPattern.getLogtailId());
-                cloneChannelDefine.setTailName(logPattern.getTailName());
-                //input
-                AppLogInput input = new AppLogInput();
-                input.setType(logPattern.getLogType() != null ? LogTypeEnum.getLogTypeName(logPattern.getLogType()) : "");
-                input.setLogPattern(logPattern.getLogPattern());
-                input.setPatternCode(logPattern.getPatternCode());
-                input.setLogSplitExpress(logPattern.getLogSplitExpress());
-                input.setLinePrefix(logPattern.getFirstLineReg());
+                List<LogPattern> logPatternList = appLogMeta.getLogPatternList();
+                for (LogPattern logPattern : logPatternList) {
+                    ChannelDefine cloneChannelDefine = ObjectUtil.clone(channelDefine);
+                    cloneChannelDefine.setChannelId(logPattern.getLogtailId());
+                    cloneChannelDefine.setTailName(logPattern.getTailName());
+                    //input
+                    AppLogInput input = new AppLogInput();
+                    input.setType(logPattern.getLogType() != null ? LogTypeEnum.getLogTypeName(logPattern.getLogType()) : "");
+                    input.setLogPattern(logPattern.getLogPattern());
+                    input.setPatternCode(logPattern.getPatternCode());
+                    input.setLogSplitExpress(logPattern.getLogSplitExpress());
+                    input.setLinePrefix(logPattern.getFirstLineReg());
 
-                //output
-                Output output = OutPutServiceFactory.getChannelDefineLocatorExtension().getOutPutByMQConfigType(logPattern);
-                // filter
-                List<FilterDefine> filterDefines = logPattern.getFilters();
-                List<FilterConf> filters = Lists.newArrayList();
-                if (filterDefines != null) {
-                    filters = filterDefines.stream().map(FilterTrans::filterConfTrans).collect(Collectors.toList());
+                    //output
+                    Output output = OutPutServiceFactory.getChannelDefineLocatorExtension().getOutPutByMQConfigType(logPattern);
+                    // filter
+                    List<FilterDefine> filterDefines = logPattern.getFilters();
+                    List<FilterConf> filters = Lists.newArrayList();
+                    if (filterDefines != null) {
+                        filters = filterDefines.stream().map(FilterTrans::filterConfTrans).collect(Collectors.toList());
+                    }
+                    cloneChannelDefine.setIps(logPattern.getIps());
+                    cloneChannelDefine.setIpDirectoryRel(logPattern.getIpDirectoryRel());
+                    cloneChannelDefine.setFilters(filters);
+                    cloneChannelDefine.setInput(input);
+                    cloneChannelDefine.setOutput(output);
+                    cloneChannelDefine.setOperateEnum(logPattern.getOperateEnum());
+                    channelDefines.add(cloneChannelDefine);
                 }
-                cloneChannelDefine.setIps(logPattern.getIps());
-                cloneChannelDefine.setIpDirectoryRel(logPattern.getIpDirectoryRel());
-                cloneChannelDefine.setFilters(filters);
-                cloneChannelDefine.setInput(input);
-                cloneChannelDefine.setOutput(output);
-                cloneChannelDefine.setOperateEnum(logPattern.getOperateEnum());
-                channelDefines.add(cloneChannelDefine);
-            }
-        });
+            });
+        }
 
         agentTailConf.setChannelDefine(channelDefines);
         agentTailConf.setAgentDefine(logCollectMeta.getAgentDefine());

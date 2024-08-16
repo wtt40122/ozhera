@@ -194,10 +194,8 @@ public class AgentMemoryServiceImpl implements AgentMemoryService {
             Map<String, ChannelMemory.FileProgress> fileProgressMap = channelMemory.getFileProgressMap();
             List<String> expireFilePaths = fileProgressMap.keySet().stream()
                     .filter(filePath -> !filePaths.contains(filePath))
-                    .collect(Collectors.toList());
-            expireFilePaths.forEach(expireFilePath -> {
-                fileProgressMap.remove(expireFilePath);
-            });
+                    .toList();
+            expireFilePaths.forEach(fileProgressMap::remove);
             flush2disk((Lists.newArrayList(channelMemory)));
         }
     }

@@ -211,7 +211,9 @@ public class ChannelEngine {
             log.info("realChannelService,id:{}", channelId);
             try {
                 channelService.start();
-                fileMonitorListener.addChannelService(channelService);
+                if (channelService instanceof ChannelServiceImpl) {
+                    fileMonitorListener.addChannelService(channelService);
+                }
                 successChannelIds.add(channelId);
             } catch (RejectedExecutionException e) {
                 log.error("The thread pool is full.id:{}", channelId, e);
@@ -438,7 +440,9 @@ public class ChannelEngine {
                     if (channelIdDels.contains(channelId)) {
                         log.info("[delete config]channelService:{}", channelId);
                         channelService.close();
-                        fileMonitorListener.removeChannelService(channelService);
+                        if (channelService instanceof ChannelServiceImpl) {
+                            fileMonitorListener.removeChannelService(channelService);
+                        }
                         tempChannelServiceList.add(channelService);
                         this.channelDefineList.removeIf(channelDefine -> {
                             if (channelDefine.getChannelId().equals(channelId)) {
