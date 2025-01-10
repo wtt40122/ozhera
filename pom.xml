@@ -1059,6 +1059,7 @@
                 <configuration>
                     <excludes>
                         <exclude>**/*.png</exclude>
+                        <exclude>**/*.PNG</exclude>
                         <exclude>**/*.jpg</exclude>
                         <exclude>**/*.jpeg</exclude>
                     </excludes>
