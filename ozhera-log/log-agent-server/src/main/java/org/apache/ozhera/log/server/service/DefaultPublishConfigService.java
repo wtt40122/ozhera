@@ -361,17 +361,16 @@ public class DefaultPublishConfigService implements PublishConfigService {
     @Override
     public List<String> getAllAgentList() {
         List<String> remoteAddress = Lists.newArrayList();
-        List<String> ipAddress = Lists.newArrayList();
+//        List<String> ipAddress = Lists.newArrayList();
         List<String> finalRemoteAddress = remoteAddress;
         AgentContext.ins().map.forEach((key, value) -> {
             finalRemoteAddress.add(key);
-            ipAddress.add(StringUtils.substringBefore(key, SYMBOL_COLON));
+//            ipAddress.add(StringUtils.substringBefore(key, SYMBOL_COLON));
         });
-
+        if (remoteAddress.size() > 1000) {
+            remoteAddress = remoteAddress.subList(0, 1000);
+        }
         if (COUNT_INCR.getAndIncrement() % 1000 == 0) {
-            if (remoteAddress.size() > 1000) {
-                remoteAddress = remoteAddress.subList(0, 1000);
-            }
             log.info("The set of remote addresses of the connected agent machine is:{}", GSON.toJson(remoteAddress));
         }
         return remoteAddress;
