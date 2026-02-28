@@ -56,6 +56,7 @@ import static org.apache.ozhera.log.common.Constant.SYMBOL_COLON;
  * @description
  * @date 2022/12/6 14:32
  */
+// 括号
 @Slf4j
 @Component
 @Service(interfaceClass = LogProcessCollector.class, group = "$dubbo.group", timeout = 10000)
@@ -64,7 +65,7 @@ public class DefaultLogProcessCollector implements LogProcessCollector {
     private final Map<String, List<UpdateLogProcessCmd.CollectDetail>> tailProgressMap = new ConcurrentHashMap<>(256);
 
     // Maximum number of stored IPs to prevent unlimited memory growth
-    private static final int MAX_IP_COUNT = 500000;
+    private static final int MAX_IP_COUNT = 200000;
 
     // The maximum number of CollectDetails under each IP to prevent excessive data for a single IP
     private static final int MAX_COLLECT_DETAIL_PER_IP = 5000;
@@ -170,10 +171,16 @@ public class DefaultLogProcessCollector implements LogProcessCollector {
                         Long latestTimeA = getLatestCollectTime(detailsA);
                         Long latestTimeB = getLatestCollectTime(detailsB);
 
-                        if (latestTimeA == null && latestTimeB == null) return 0;
-                        if (latestTimeA == null) return -1;
-                        if (latestTimeB == null) return 1;
-                        return latestTimeB.compareTo(latestTimeA); // 降序排列
+                        if (latestTimeA == null && latestTimeB == null) {
+                            return 0;
+                        }
+                        if (latestTimeA == null) {
+                            return -1;
+                        }
+                        if (latestTimeB == null) {
+                            return 1;
+                        }
+                        return latestTimeB.compareTo(latestTimeA);
                     })
                     .limit(MAX_COLLECT_DETAIL_PER_IP)
                     .collect(Collectors.toList());
@@ -189,7 +196,7 @@ public class DefaultLogProcessCollector implements LogProcessCollector {
         if (detail1 == detail2) return true;
         if (detail1 == null || detail2 == null) return false;
 
-        // 比较关键字段
+        // Compare key fields
         return Objects.equals(detail1.getTailId(), detail2.getTailId()) &&
                 Objects.equals(detail1.getTailName(), detail2.getTailName()) &&
                 Objects.equals(detail1.getPath(), detail2.getPath()) &&
@@ -236,8 +243,8 @@ public class DefaultLogProcessCollector implements LogProcessCollector {
 
         // Simple strategy: remove the latter half of the entries
         allKeys.sort(String::compareTo);
-        // Remove half of the entries
-        int removeCount = allKeys.size() / 2;
+
+        int removeCount = allKeys.size() / 4;
 
         for (int i = 0; i < removeCount && i < allKeys.size(); i++) {
             tailProgressMap.remove(allKeys.get(i));
@@ -348,7 +355,7 @@ public class DefaultLogProcessCollector implements LogProcessCollector {
                             if (StringUtils.isNotBlank(dto.getIp())) {
                                 dtoList.add(dto);
 
-                                // 设置一个合理的上限，防止返回过多数据
+                                // Set a reasonable upper limit to prevent returning too much data
                                 if (dtoList.size() >= MAX_COLLECT_DETAIL_PER_IP) {
                                     log.warn("getTailLogProcess reached size limit: {}, stopping processing", MAX_COLLECT_DETAIL_PER_IP);
                                     break;

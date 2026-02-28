@@ -56,8 +56,11 @@ public class DefaultPublishConfigService implements PublishConfigService {
     private RpcServer rpcServer;
 
     private static final String CONFIG_COMPRESS_KEY = "CONFIG_COMPRESS_ENABLED";
+    private static final String CONFIG_COMPRESS_MACHINE_KEY = "CONFIG_COMPRESS_MACHINE";
 
     private volatile boolean configCompressValue = false;
+
+    private volatile String configCompressMachine;
 
     private final Random random = new Random();
 
@@ -85,18 +88,25 @@ public class DefaultPublishConfigService implements PublishConfigService {
     }
 
     public void init() {
-        String raw = System.getenv(CONFIG_COMPRESS_KEY);
-        if (StringUtils.isBlank(raw)) {
-            raw = System.getProperty(CONFIG_COMPRESS_KEY);
-        }
-        if (StringUtils.isNotBlank(raw)) {
+        String compressRaw = getConfig(CONFIG_COMPRESS_KEY);
+        configCompressMachine = getConfig(CONFIG_COMPRESS_MACHINE_KEY);
+        log.info("init configCompressValue {},configCompressMachine {}", configCompressValue, configCompressMachine);
+        if (StringUtils.isNotBlank(compressRaw)) {
             try {
-                configCompressValue = Boolean.parseBoolean(raw);
-                log.info("configCompressValue {}", configCompressValue);
+                configCompressValue = Boolean.parseBoolean(compressRaw);
+                log.info("configCompressValue {},configCompressMachine{}", configCompressValue, configCompressMachine);
             } catch (Exception e) {
-                log.error("parse {} error,use default value:{},config value:{}", CONFIG_COMPRESS_KEY, configCompressValue, raw);
+                log.error("parse {} error,use default value:{},config value:{}", CONFIG_COMPRESS_KEY, configCompressValue, compressRaw);
             }
         }
+    }
+
+    private String getConfig(String key) {
+        String raw = System.getenv(key);
+        if (StringUtils.isBlank(raw)) {
+            raw = System.getProperty(key);
+        }
+        return raw;
     }
 
 
@@ -121,7 +131,7 @@ public class DefaultPublishConfigService implements PublishConfigService {
      * @param agentIp
      * @param meta
      */
-    private void doSendConfig(String agentIp, LogCollectMeta meta) {
+    private void doSendConfigSync(String agentIp, LogCollectMeta meta) {
         int count = 1;
         while (count < 3) {
             Map<String, AgentChannel> logAgentMap = getAgentChannelMap();
@@ -174,12 +184,16 @@ public class DefaultPublishConfigService implements PublishConfigService {
                     log.error("send config failed after retry, agentIp:{}", agentIp, ex);
                     return false;
                 });
+        try {
+            Thread.sleep(random.nextInt(800, 8000));
+        } catch (InterruptedException e) {
+            log.error("sleep interrupted, agentIp:{}", agentIp, e);
+        }
     }
 
     private CompletableFuture<Boolean> sendWithRetry(String agentIp,
                                                      LogCollectMeta meta,
                                                      int attempt) {
-
         return trySendOnce(agentIp, meta)
                 .thenCompose(success -> {
 
@@ -187,11 +201,11 @@ public class DefaultPublishConfigService implements PublishConfigService {
                         return CompletableFuture.completedFuture(true);
                     }
 
-                    if (attempt >= 3) {
+                    if (attempt > 2) {
                         return CompletableFuture.completedFuture(false);
                     }
 
-                    long delay = (long) Math.pow(2, attempt) * 200L; // 指数退避
+                    long delay = (long) Math.pow(2, attempt) * 200L;
                     log.warn("send config retry attempt:{}, delay:{}ms, agentIp:{}",
                             attempt, delay, agentIp);
 
@@ -226,8 +240,11 @@ public class DefaultPublishConfigService implements PublishConfigService {
         RemotingCommand req = RemotingCommand.createRequestCommand(LogCmd.LOG_REQ);
         req.setBody(sendStr.getBytes());
 
-        if (configCompressValue) {
+        if (configCompressValue || (StringUtils.isNotBlank(configCompressMachine) &&
+                StringUtils.isNotBlank(meta.getAgentMachine()) &&
+                configCompressMachine.contains(meta.getAgentMachine()))) {
             req.enableCompression();
+            log.info("The configuration is compressed,agent ip:{},Configuration information:{}", agentCurrentIp, sendStr);
         }
 
         Stopwatch started = Stopwatch.createStarted();
@@ -273,91 +290,6 @@ public class DefaultPublishConfigService implements PublishConfigService {
         return future;
     }
 
-
-    private CompletableFuture<Boolean> doSendConfigAsyncWithRetry(String agentIp, LogCollectMeta meta, int count) {
-        CompletableFuture<Boolean> future = new CompletableFuture<>();
-
-        Map<String, AgentChannel> logAgentMap = getAgentChannelMap();
-        String agentCurrentIp = getCorrectDockerAgentIP(agentIp, logAgentMap);
-
-        if (!logAgentMap.containsKey(agentCurrentIp)) {
-            log.info("The current agent IP is not connected,ip:{},configuration data:{}", agentIp, GSON.toJson(meta));
-            if (count < 3) {
-                // Retry after delay
-                SEND_CONFIG_EXECUTOR.execute(() -> {
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(random.nextInt(600));
-                    } catch (InterruptedException ignored) {
-                    }
-                    doSendConfigAsyncWithRetry(agentIp, meta, count + 1)
-                            .whenComplete((result, throwable) -> {
-                                if (throwable != null) {
-                                    future.completeExceptionally(throwable);
-                                } else {
-                                    future.complete(result);
-                                }
-                            });
-                });
-            } else {
-                future.complete(false);
-            }
-            return future;
-        }
-
-        if (CollectionUtils.isEmpty(meta.getAppLogMetaList())) {
-            future.complete(false);
-            return future;
-        }
-
-        String sendStr = GSON.toJson(meta);
-        RemotingCommand req = RemotingCommand.createRequestCommand(LogCmd.LOG_REQ);
-        req.setBody(sendStr.getBytes());
-
-        if (configCompressValue) {
-            req.enableCompression();
-        }
-
-        log.info("Send the configuration asynchronously,agent ip:{},Configuration information:{}", agentCurrentIp, sendStr);
-        Stopwatch started = Stopwatch.createStarted();
-
-        final int currentCount = count;
-        rpcServer.send(logAgentMap.get(agentCurrentIp).getChannel(), req, 40000, response -> {
-            started.stop();
-            if (null == response.getResponseCommand()) {
-                log.error("response is null,response:{}", response);
-                future.completeExceptionally(new Exception("response is null"));
-                return;
-            }
-            String responseStr = new String(response.getResponseCommand().getBody());
-            log.info("The configuration is send successfully asynchronously---->{},duration：{}s,agentIp:{}",
-                    responseStr, started.elapsed().getSeconds(), agentCurrentIp);
-
-            if (Objects.equals(responseStr, "ok")) {
-                future.complete(true);
-            } else if (currentCount < 3) {
-                // Retry on non-ok response
-                SEND_CONFIG_EXECUTOR.execute(() -> {
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(random.nextInt(600));
-                    } catch (InterruptedException ignored) {
-                    }
-                    doSendConfigAsyncWithRetry(agentIp, meta, currentCount + 1)
-                            .whenComplete((result, throwable) -> {
-                                if (throwable != null) {
-                                    future.completeExceptionally(throwable);
-                                } else {
-                                    future.complete(result);
-                                }
-                            });
-                });
-            } else {
-                future.complete(false);
-            }
-        });
-
-        return future;
-    }
-
     @Override
     public List<String> getAllAgentList() {
         List<String> remoteAddress = Lists.newArrayList();
@@ -368,7 +300,7 @@ public class DefaultPublishConfigService implements PublishConfigService {
 //            ipAddress.add(StringUtils.substringBefore(key, SYMBOL_COLON));
         });
         if (remoteAddress.size() > 1000) {
-            remoteAddress = remoteAddress.subList(0, 1000);
+            remoteAddress = remoteAddress.subList(0, 600);
         }
         if (COUNT_INCR.getAndIncrement() % 1000 == 0) {
             log.info("The set of remote addresses of the connected agent machine is:{}", GSON.toJson(remoteAddress));
