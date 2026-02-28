@@ -56,7 +56,6 @@ import static org.apache.ozhera.log.common.Constant.SYMBOL_COLON;
  * @description
  * @date 2022/12/6 14:32
  */
-// 括号
 @Slf4j
 @Component
 @Service(interfaceClass = LogProcessCollector.class, group = "$dubbo.group", timeout = 10000)
@@ -297,7 +296,7 @@ public class DefaultLogProcessCollector implements LogProcessCollector {
                 }
 
                 if (filteredDetails.isEmpty()) {
-                    // 如果过滤后没有有效数据，则移除整个entry
+                    // If there is no valid data after filtering, remove the entire entry
                     iterator.remove();
                     removedCount++;
                 } else {
