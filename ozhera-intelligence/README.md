@@ -19,6 +19,14 @@
 
 -->
 
+> ⚠️ **Work In Progress**
+>
+> This module (ozhera-intelligence) is still **under construction (Work In Progress)**. It has not been fully open-sourced yet and **cannot be compiled or run on its own**.
+>
+> At this stage we are only releasing a few of its **most important prompts** (trace / log / metrics root-cause-analysis prompts, the result-aggregation prompt, the code-fix-analysis prompt — see the `Prompts` class under `ozhera-intelligence-domain`) so that the community can study and reflect on how intelligent operations can be implemented.
+>
+> The agent/LLM orchestration layer (which previously depended on Xiaomi's internal agent framework) has been removed from the open-source code. The complete functionality will be filled in gradually in subsequent releases — stay tuned.
+
 # Overview
 + Apache OzHera(incubating) Intelligence Platform is responsible for generating intelligent-related functionalities.
 + Currently, features are under development.
@@ -38,14 +46,13 @@
 + MetricsService: Retrieves monitoring metric data
 + TraceService: Retrieves trace data
 
-# Important Dependencies
-It relies on a Xiaomi open-source [Agent builder platform--m78](https://github.com/XiaoMi/mone/tree/master/m78-all)
-
 # Intelligent Workflow (Sequence Diagram)
 ![ozhera-intelligence](../readme/images/ozhera-intelligence.png)
 
 # LLM Environment Variables
-Currently, the LLM class is used for invoking large language models (LLMs). The required environment variables (env vars) are defined in the LLMProvider class.
+> Note: The LLM invocation layer is not part of the currently open-sourced code (see the Work In Progress notice above). The notes below describe the design intent of the planned implementation.
+
+The implementation is intended to invoke large language models (LLMs) through a configurable provider, with the required environment variables driven by an `LLM_PROVIDER` setting.
 
 ## Prerequisite:
 A base LLM_PROVIDER env var must be set to specify the desired LLMProvider.

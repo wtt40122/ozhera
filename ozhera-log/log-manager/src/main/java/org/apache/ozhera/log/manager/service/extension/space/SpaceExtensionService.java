@@ -17,9 +17,19 @@
  * under the License.
  */
 
-package org.apache.ozhera.metrics.config;
+package org.apache.ozhera.log.manager.service.extension.space;
 
-public enum PromEnvEnum {
-    STAGING,
-    ONLINE
+import org.apache.ozhera.log.common.Result;
+import org.apache.ozhera.log.manager.model.MilogSpaceParam;
+
+public interface SpaceExtensionService {
+
+
+    String DEFAULT_SPACE_EXTENSION_SERVICE_KEY = "defaultSpaceExtensionService";
+
+    Result<String> checkCreatePermission(Long tenantId);
+
+    Result<String> checkUpdatePermission(MilogSpaceParam param);
+
+    Result<String> checkDeletePermission(Long id);
 }

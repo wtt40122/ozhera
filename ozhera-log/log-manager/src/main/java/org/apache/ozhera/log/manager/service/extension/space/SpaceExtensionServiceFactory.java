@@ -17,9 +17,21 @@
  * under the License.
  */
 
-package org.apache.ozhera.metrics.config;
+package org.apache.ozhera.log.manager.service.extension.space;
 
-public enum PromEnvEnum {
-    STAGING,
-    ONLINE
+import com.xiaomi.youpin.docean.Ioc;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.ozhera.log.common.Config;
+
+import static org.apache.ozhera.log.manager.service.extension.space.SpaceExtensionService.DEFAULT_SPACE_EXTENSION_SERVICE_KEY;
+
+@Slf4j
+public class SpaceExtensionServiceFactory {
+    private static String factualServiceName;
+
+    public static SpaceExtensionService getSpaceExtensionService() {
+        factualServiceName = Config.ins().get("space.extension.service", DEFAULT_SPACE_EXTENSION_SERVICE_KEY);
+        log.debug("SpaceExtensionServiceFactory factualServiceName:{}", factualServiceName);
+        return Ioc.ins().getBean(factualServiceName);
+    }
 }

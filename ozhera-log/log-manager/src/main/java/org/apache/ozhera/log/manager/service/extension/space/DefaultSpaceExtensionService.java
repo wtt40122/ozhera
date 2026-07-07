@@ -16,23 +16,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.ozhera.intelligence.bootstrap;
 
+package org.apache.ozhera.log.manager.service.extension.space;
+
+import com.xiaomi.youpin.docean.anno.Service;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.context.annotation.ComponentScan;
+import org.apache.ozhera.log.common.Result;
+import org.apache.ozhera.log.manager.model.MilogSpaceParam;
 
-@EnableAutoConfiguration
-@ComponentScan(basePackages = {"org.apache.ozhera.intelligence"})
+import static org.apache.ozhera.log.manager.service.extension.space.SpaceExtensionService.DEFAULT_SPACE_EXTENSION_SERVICE_KEY;
+
+@Service(name = DEFAULT_SPACE_EXTENSION_SERVICE_KEY)
 @Slf4j
-public class IntelligenceBootStrap {
-    public static void main(String... args) {
-        try {
-            SpringApplication.run(IntelligenceBootStrap.class, args);
-        } catch (Throwable throwable) {
-            log.error(throwable.getMessage(), throwable);
-            System.exit(-1);
-        }
+public class DefaultSpaceExtensionService implements SpaceExtensionService {
+
+    @Override
+    public Result<String> checkCreatePermission(Long tenantId) {
+        return Result.success();
+    }
+
+    @Override
+    public Result<String> checkUpdatePermission(MilogSpaceParam param) {
+        return Result.success();
+    }
+
+    @Override
+    public Result<String> checkDeletePermission(Long id) {
+        return Result.success();
     }
 }
